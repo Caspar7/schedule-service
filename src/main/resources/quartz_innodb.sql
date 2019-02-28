@@ -183,9 +183,8 @@ CREATE INDEX IDX_QRTZ_FT_JG ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,JOB_GROUP);
 CREATE INDEX IDX_QRTZ_FT_T_G ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_NAME,TRIGGER_GROUP);
 CREATE INDEX IDX_QRTZ_FT_TG ON QRTZ_FIRED_TRIGGERS(SCHED_NAME,TRIGGER_GROUP);
 
-commit;
 
---一下为自定义表和示例数据
+-- 以下为自定义表和示例数据
 SET FOREIGN_KEY_CHECKS=0;
 DROP TABLE IF EXISTS `job_entity`;
 CREATE TABLE `job_entity` (
@@ -207,5 +206,4 @@ VALUES
 	(2, 'second', 'helloworld', '0/5 * * * * ? ', '2', '第二个', NULL, NULL, 'PAUSED'),
 	(3, 'third', 'helloworld', '0/15 * * * * ? ', '3', '第三个', NULL, NULL, 'PAUSED');
 
-
-
+commit;
