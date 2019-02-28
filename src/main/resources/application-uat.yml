@@ -1,10 +1,23 @@
+server:
+  port: ${deployPort}
+eureka:
+  instance:
+    lease-renewal-interval-in-seconds: 20 #租期更新时间间隔（默认30秒）
+    lease-expiration-duration-in-seconds: 60 #租期到期时间（默认90秒）
+    instance-id: ${serviceIp}:${server.port}
+    ip-address: ${serviceIp}    # 使用docker部署时 指定此实例的ip
+    prefer-ip-address: true    # 注册时使用ip而不是主机名
+  client:
+    healthcheck:
+      enabled: true #开启健康检查（需要spring-boot-starter-actuator依赖）
+    serviceUrl:
+      defaultZone: http://35.201.196.124:1111/eureka/,http://35.220.222.101:1111/eureka/
+
 quartz:
   enabled: true
-spring:
-  application:
-    name: Spring-Quartz-Scheduler                                       #Quartz调度中心
+spring:                                      #Quartz调度中心
   datasource:
-    url: jdbc:mysql://localhost:3306/dyc1
+    url: jdbc:mysql://localhost:3306/quartz?useUnicode=yes&characterEncoding=UTF-8
     username: root
     password: root
     tomcat:
@@ -16,3 +29,24 @@ spring:
       testWhileIdle: true
       testOnBorrow: false
       testOnReturn: false
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      jadira:
+        usertype:
+          autoRegisterUserTypes: true
+  thymeleaf:
+    mode: HTML5
+    cache: false
+    prefix: classpath:/templates/
+    servlet:
+      content-type: text/html
+    encoding: UTF-8
+    suffix: .html
+    check-template-location: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} ${LOG_LEVEL_PATTERN:-%5p} %m%n"

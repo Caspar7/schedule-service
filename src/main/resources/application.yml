@@ -5,11 +5,11 @@ spring:
     active: dev #${env}
 
 #admin client config
-#management:
-#  endpoint:
-#    health:
-#      show-details: ALWAYS
-#  endpoints:
-#    web:
-#      exposure:
-#        include: "*"
+management:
+  endpoint:
+    health:
+      show-details: ALWAYS
+  endpoints:
+    web:
+      exposure:
+        include: "*"
