@@ -1,4 +1,4 @@
-package com.dyc.schedule.web;
+package com.dyc.schedule.controller;
 
 import com.dyc.schedule.entity.JobEntity;
 import com.dyc.schedule.service.DynamicJobService;
@@ -58,7 +58,7 @@ public class JobController {
      * @return
      * @throws SchedulerException
      */
-    @RequestMapping("/getRunJob")
+    @GetMapping("/getRunJob")
     @ResponseBody
     public List<JobEntity> getAllRunningJob() throws SchedulerException{
         logger.info("[JobController] the method:getAllRunningJob!");
@@ -69,7 +69,7 @@ public class JobController {
      *更新或者添加一个任务
      * @param scheduleJob
      */
-    @RequestMapping("/saveOrUpdate")
+    @PostMapping("/saveOrUpdate")
     @ResponseBody
     public Object addOrUpdateJob(@ModelAttribute JobEntity scheduleJob){
         logger.info("[JobController] the method addOrUpdateJob, the param:{}", scheduleJob);
@@ -88,7 +88,7 @@ public class JobController {
      *运行一个任务
      * @param id
      */
-    @RequestMapping("/runOneJob")
+    @PostMapping("/runOneJob")
     @ResponseBody
     public Object runJob(Integer id){
         logger.info("----------------runOneJob----------------");
@@ -109,7 +109,7 @@ public class JobController {
      * @return
      */
     @ResponseBody
-    @RequestMapping("/resumeJob")
+    @PostMapping("/resumeJob")
     public Object resumeJob(Integer id){
         logger.info("----------------resumeJob----------------");
         Message message = Message.failure();
@@ -127,7 +127,7 @@ public class JobController {
      *停止一个定时任务
      * @param id
      */
-    @RequestMapping("/pauseJob")
+    @PostMapping("/pauseJob")
     @ResponseBody
     public Object pauseJob(Integer id){
         logger.info("------------closeJob----------------");
@@ -147,7 +147,7 @@ public class JobController {
      * @param id
      * @return
      */
-    @RequestMapping("/deleteJob")
+    @PostMapping("/deleteJob")
     @ResponseBody
     public Object deleteJob(Integer id){
         logger.info("------------deleteJob----------------");
@@ -164,7 +164,7 @@ public class JobController {
 
 
     //根据ID重启某个Job
-    @RequestMapping("/refresh/{id}")
+    @GetMapping("/refresh/{id}")
     public String refresh(@PathVariable Integer id) throws SchedulerException {
         String result;
         JobEntity entity = jobService.getJobEntityById(id);
@@ -192,7 +192,7 @@ public class JobController {
 
 
     //重启数据库中所有的Job
-    @RequestMapping("/refresh/all")
+    @GetMapping("/refresh/all")
     public String refreshAll() {
         String result;
         try {
