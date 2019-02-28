@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: schedule-service
+  profiles:
+    active: dev #${env}
+
+#admin client config
+#management:
+#  endpoint:
+#    health:
+#      show-details: ALWAYS
+#  endpoints:
+#    web:
+#      exposure:
+#        include: "*"
