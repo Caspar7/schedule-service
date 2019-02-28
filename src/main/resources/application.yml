@@ -2,7 +2,7 @@ spring:
   application:
     name: schedule-service
   profiles:
-    active: dev #${env}
+    active: ${env}
 
 #admin client config
 management:
