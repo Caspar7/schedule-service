@@ -191,7 +191,7 @@ public class DynamicJobService {
         }
         JobEntity scheduleJob = op.get();
         if(JobStatus.NORMAL.name().equals(scheduleJob.getStatus())){
-            throw new SchedulerException("job is already runn.");
+            throw new SchedulerException("job is already run.");
         }
         JobKey jobKey = JobKey.jobKey(scheduleJob.getJobName(),scheduleJob.getJobGroup());
         scheduleJob.setStatus(JobStatus.NORMAL.name());
