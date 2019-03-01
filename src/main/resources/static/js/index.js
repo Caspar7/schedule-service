@@ -86,18 +86,19 @@ $(function() {
     		function() {
     			$("#myModalLabel").html("cron edit");
     			var jobId = $(this).parent().data("id");
-    			$("#jobId").val(jobId);
-    			$("#edit_name").val($("#name_"+jobId).text());
-    			$("#edit_group").val($("#group_"+jobId).text());
-                $("#edit_bean").val($("#bean_"+jobId).text());
+    			$("#id").val(jobId);
+    			$("#edit_jobName").val($("#jobName_"+jobId).text());
+    			$("#edit_jobGroup").val($("#jobGroup_"+jobId).text());
+                $("#edit_description").val($("#description_"+jobId).text());
+                $("#edit_cron").val($("#corn_"+jobId).text());
+    			$("#edit_api").val($("#api_"+jobId).text());
                 $("#edit_method").val($("#method_"+jobId).text());
-    			$("#edit_cron").val($("#cron_"+jobId).text());
+                $("#edit_parameter").val($("#parameter_"+jobId).text());
     			$("#edit_status").val($("#status_"+jobId).text());
-    			$("#edit_desc").val($("#desc_"+jobId).text());
-    			
-    			$('#edit_name').attr("readonly","readonly"); 
-    			$('#edit_group').attr("readonly","readonly");
-    			$('#edit_desc').attr("readonly","readonly");
+
+                $('#edit_jobName').attr("readonly","readonly");
+    			$('#edit_jobGroup').attr("readonly","readonly");
+    			$('#edit_status').attr("disabled","disabled");
     			
     			$("#myModal").modal("show");
     });

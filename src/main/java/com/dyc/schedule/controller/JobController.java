@@ -32,7 +32,7 @@ public class JobController {
     @PostConstruct
     public void initialize() {
         try {
-            reStartAllJobs();
+            jobService.reStartAllJobs();
             logger.info("INIT SUCCESS");
         } catch (SchedulerException e) {
             logger.info("INIT EXCEPTION : " + e.getMessage());
@@ -165,29 +165,8 @@ public class JobController {
 
     //根据ID重启某个Job
     @GetMapping("/refresh/{id}")
-    public String refresh(@PathVariable Integer id) throws SchedulerException {
-        String result;
-        JobEntity entity = jobService.getJobEntityById(id);
-        if (entity == null) return "error: id is not exist ";
-        TriggerKey triggerKey = new TriggerKey(entity.getJobName(), entity.getJobGroup());
-        JobKey jobKey = jobService.getJobKey(entity);
-        Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        try {
-            scheduler.unscheduleJob(triggerKey);
-            scheduler.deleteJob(jobKey);
-            JobDataMap map = jobService.getJobDataMap(entity);
-            JobDetail jobDetail = jobService.geJobDetail(jobKey, entity.getDescription(), map);
-            if (entity.getStatus().equals(JobStatus.NORMAL.name())) {
-                scheduler.scheduleJob(jobDetail, jobService.getTrigger(entity));
-                result = "Refresh Job : " + entity.getJobName() + "\t api: " + entity.getApi() + " success !";
-            } else {
-                result = "Refresh Job : " + entity.getJobName() + "\t api: " + entity.getApi() + " failed ! , " +
-                        "Because the Job status is " + entity.getStatus();
-            }
-        } catch (SchedulerException e) {
-            result = "Error while Refresh " + e.getMessage();
-        }
-        return result;
+    public void refresh(@PathVariable Integer id) throws SchedulerException {
+        jobService.refreshJob(id);
     }
 
 
@@ -196,7 +175,7 @@ public class JobController {
     public String refreshAll() {
         String result;
         try {
-            reStartAllJobs();
+            jobService.reStartAllJobs();
             result = "SUCCESS";
         } catch (SchedulerException e) {
             result = "EXCEPTION : " + e.getMessage();
@@ -204,23 +183,4 @@ public class JobController {
         return "refresh all jobs : " + result;
     }
 
-    /**
-     * 重新启动所有的job
-     */
-    private void reStartAllJobs() throws SchedulerException {
-        Scheduler scheduler = schedulerFactoryBean.getScheduler();
-        Set<JobKey> set = scheduler.getJobKeys(GroupMatcher.anyGroup());
-        for (JobKey jobKey : set) {
-            scheduler.deleteJob(jobKey);
-        }
-        for (JobEntity job : jobService.loadJobs()) {
-            logger.info("Job register name : {} , group : {} , cron : {}", job.getJobName(), job.getJobGroup(), job.getCron());
-            JobDataMap map = jobService.getJobDataMap(job);
-            JobKey jobKey = jobService.getJobKey(job);
-            JobDetail jobDetail = jobService.geJobDetail(jobKey, job.getDescription(), map);
-            if (job.getStatus().equals(JobStatus.NORMAL.name())) scheduler.scheduleJob(jobDetail, jobService.getTrigger(job));
-            else
-                logger.info("Job jump name : {} , Because {} status is {}", job.getJobName(), job.getJobName(), job.getStatus());
-        }
-    }
 }

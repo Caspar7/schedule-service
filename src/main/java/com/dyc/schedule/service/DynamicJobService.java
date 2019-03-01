@@ -6,15 +6,18 @@ import com.dyc.schedule.job.DynamicJob;
 import com.dyc.schedule.util.JobStatus;
 import org.apache.commons.lang.StringUtils;
 import org.quartz.*;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.quartz.SchedulerFactoryBean;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class DynamicJobService {
@@ -104,9 +107,8 @@ public class DynamicJobService {
      * @throws Exception
      */
     public void saveOrUpdate(JobEntity scheduleJob) throws Exception {
-        TriggerKey triggerKey = TriggerKey.triggerKey(scheduleJob.getJobName(), scheduleJob.getJobGroup());
-        CronTrigger cronTrigger = (CronTrigger) schedulerFactoryBean.getScheduler().getTrigger(triggerKey);
-        if (cronTrigger == null) {
+        logger.info("scheduleJob" + scheduleJob.toString());
+        if (null == scheduleJob.getId()) {
             logger.info("save a new job:" + scheduleJob.toString());
             addJob(scheduleJob);
         } else {
@@ -240,21 +242,61 @@ public class DynamicJobService {
      * @param scheduleJob
      * @throws Exception
      */
-    private void updateJobCronSchedule(JobEntity scheduleJob) throws Exception {
+    private void updateJobCronSchedule(JobEntity scheduleJob) throws SchedulerException {
         checkNotNull(scheduleJob);
         if (StringUtils.isBlank(scheduleJob.getCron())) {
-            throw new Exception("[SchedulerJobServiceImpl] CronExpression is null.");
+            throw new SchedulerException("CronExpression is null.");
         }
-        TriggerKey triggerKey = TriggerKey.triggerKey(scheduleJob.getJobName(), scheduleJob.getJobGroup());
-        CronTrigger cronTrigger = (CronTrigger) schedulerFactoryBean.getScheduler().getTrigger(triggerKey);
-        CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule(scheduleJob.getCron());
-        cronTrigger = cronTrigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(cronScheduleBuilder).build();
-        JobKey jobKey = JobKey.jobKey(scheduleJob.getJobName(), scheduleJob.getJobGroup());
-        JobDetail jobDetail = schedulerFactoryBean.getScheduler().getJobDetail(jobKey);
-        jobDetail.getJobDataMap().put("scheduleJob", scheduleJob);
-        schedulerFactoryBean.getScheduler().rescheduleJob(triggerKey, cronTrigger);
-        //scheduleJobInService.updateByPrimaryKey(scheduleJob);
-        repository.save(scheduleJob);
+        try{
+            if(JobStatus.NORMAL.name().equals(scheduleJob.getStatus())){
+                refreshJob(scheduleJob.getId());
+            }
+            repository.save(scheduleJob);
+        }catch (Exception e){
+            logger.error("update job faild.",e);
+            throw new SchedulerException(e.getMessage());
+        }
+    }
+
+
+    public void refreshJob(Integer id) throws SchedulerException {
+        JobEntity entity = getJobEntityById(id);
+        TriggerKey triggerKey = new TriggerKey(entity.getJobName(), entity.getJobGroup());
+        JobKey jobKey = getJobKey(entity);
+        Scheduler scheduler = schedulerFactoryBean.getScheduler();
+        try {
+            scheduler.unscheduleJob(triggerKey);
+            scheduler.deleteJob(jobKey);
+            JobDataMap map = getJobDataMap(entity);
+            JobDetail jobDetail = geJobDetail(jobKey, entity.getDescription(), map);
+            if (entity.getStatus().equals(JobStatus.NORMAL.name())) {
+                scheduler.scheduleJob(jobDetail, getTrigger(entity));
+                logger.info("Refresh Job : " + entity.getJobName() + " api: " + entity.getApi() + " success !");
+            }
+        } catch (SchedulerException e) {
+            logger.error("Refresh Job failed.",e);
+            throw new SchedulerException(e.getMessage());
+        }
+    }
+
+    /**
+     * 重新启动所有的job
+     */
+    public void reStartAllJobs() throws SchedulerException {
+        Scheduler scheduler = schedulerFactoryBean.getScheduler();
+        Set<JobKey> set = scheduler.getJobKeys(GroupMatcher.anyGroup());
+        for (JobKey jobKey : set) {
+            scheduler.deleteJob(jobKey);
+        }
+        for (JobEntity job : loadJobs()) {
+            logger.info("Job register name : {} , group : {} , cron : {}", job.getJobName(), job.getJobGroup(), job.getCron());
+            JobDataMap map = getJobDataMap(job);
+            JobKey jobKey = getJobKey(job);
+            JobDetail jobDetail = geJobDetail(jobKey, job.getDescription(), map);
+            if (job.getStatus().equals(JobStatus.NORMAL.name())) scheduler.scheduleJob(jobDetail, getTrigger(job));
+            else
+                logger.info("Job jump name : {} , Because {} status is {}", job.getJobName(), job.getJobName(), job.getStatus());
+        }
     }
 
     /**
