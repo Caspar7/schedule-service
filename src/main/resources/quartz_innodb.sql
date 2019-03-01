@@ -202,7 +202,7 @@ CREATE TABLE `job_entity` (
 
 INSERT INTO `job_entity` (`id`, `job_name`, `job_group`, `cron`, `parameter`, `description`, `method`, `api`, `status`)
 VALUES
-	(1, 'first', 'helloworld', '0/10 * * * * ? ', '1', '第一个', '', NULL, 'NORMAL'),
+	(1, 'first', 'helloworld', '0/8 * * * * ? ', '3', '第一个', 'GET', 'http://127.0.0.1:8002/api/getAllJobs', 'NORMAL'),
 	(2, 'second', 'helloworld', '0/5 * * * * ? ', '2', '第二个', NULL, NULL, 'PAUSED'),
 	(3, 'third', 'helloworld', '0/15 * * * * ? ', '3', '第三个', NULL, NULL, 'PAUSED');
 
