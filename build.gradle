@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'de.codecentric:spring-boot-admin-starter-client'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
     runtimeOnly 'mysql:mysql-connector-java'
     compile group: 'org.quartz-scheduler', name: 'quartz', version: '2.3.0'
     compile group: 'org.quartz-scheduler', name: 'quartz-jobs', version: '2.3.0'

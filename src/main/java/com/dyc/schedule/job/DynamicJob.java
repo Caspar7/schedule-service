@@ -1,14 +1,14 @@
 package com.dyc.schedule.job;
 
 import com.dyc.schedule.util.StringUtils;
+import com.google.gson.Gson;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.stereotype.Component;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * :@DisallowConcurrentExecution : 此标记用在实现Job的类上面,意思是不允许并发执行.
@@ -18,7 +18,11 @@ import java.util.List;
 @DisallowConcurrentExecution
 @Component
 public class DynamicJob implements Job {
+
     private Logger logger = LoggerFactory.getLogger(DynamicJob.class);
+
+    @Autowired
+    RestTemplate restTemplate;
 
     /**
      * 核心方法,Quartz Job真正的执行逻辑.
@@ -29,51 +33,39 @@ public class DynamicJob implements Job {
     public void execute(JobExecutionContext executorContext) throws JobExecutionException {
         //JobDetail中的JobDataMap是共用的,从getMergedJobDataMap获取的JobDataMap是全新的对象
         JobDataMap map = executorContext.getMergedJobDataMap();
-        String jarPath = map.getString("jarPath");
+        String api = map.getString("api");
         String parameter = map.getString("parameter");
-        String vmParam = map.getString("vmParam");
+        String method = map.getString("method");
         logger.info("Running Job jobName : {} ", map.getString("jobName"));
         logger.info("Running Job description : " + map.getString("JobDescription"));
         logger.info("Running Job jobGroup: {} ", map.getString("jobGroup"));
-        logger.info("Running Job cron : " + map.getString("cronExpression"));
-        logger.info("Running Job jar path : {} ", jarPath);
+        logger.info("Running Job cron : " + map.getString("cron"));
+        logger.info("Running Job api : {} ", api);
         logger.info("Running Job parameter : {} ", parameter);
-        logger.info("Running Job vmParam : {} ", vmParam);
+        logger.info("Running Job method : {} ", method);
         long startTime = System.currentTimeMillis();
-        if (!StringUtils.isEmpty(jarPath)) {
-            File jar = new File(jarPath);
-            if (jar.exists()) {
-                ProcessBuilder processBuilder = new ProcessBuilder();
-                processBuilder.directory(jar.getParentFile());
-                List<String> commands = new ArrayList<>();
-                commands.add("java");
-                if (!StringUtils.isEmpty(vmParam)) commands.add(vmParam);
-                commands.add("-jar");
-                commands.add(jarPath);
-                if (!StringUtils.isEmpty(parameter)) commands.add(parameter);
-                processBuilder.command(commands);
-                logger.info("Running Job details as follows >>>>>>>>>>>>>>>>>>>>: ");
-                logger.info("Running Job commands : {}  ", StringUtils.getListString(commands));
-                try {
-                    Process process = processBuilder.start();
-                    logProcess(process.getInputStream(), process.getErrorStream());
-                } catch (IOException e) {
-                    throw new JobExecutionException(e);
-                }
-            } else throw new JobExecutionException("Job Jar not found >>  " + jarPath);
+
+        //todo
+        if(org.apache.commons.lang.StringUtils.isBlank(api)){
+            return;
         }
+
+        if("GET".equals(method)){
+            String url = api.concat(parameter);
+            String result = restTemplate.getForObject(url, String.class);
+            logger.info("execute GET result: {}",result);
+        }
+
+        if("POST".equals(method)){
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            String jsonStr = parameter;
+            HttpEntity<String> entity = new HttpEntity<>(jsonStr, headers);
+            ResponseEntity<String> response = restTemplate.exchange(api, HttpMethod.POST, entity, String.class);
+            logger.info("execute POST result: {}",response.toString());
+        }
+
         long endTime = System.currentTimeMillis();
         logger.info(">>>>>>>>>>>>> Running Job has been completed , cost time :  " + (endTime - startTime) + "ms\n");
     }
-
-    //记录Job执行内容
-    private void logProcess(InputStream inputStream, InputStream errorStream) throws IOException {
-        String inputLine;
-        String errorLine;
-        BufferedReader inputReader = new BufferedReader(new InputStreamReader(inputStream));
-        BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream));
-        while ((inputLine = inputReader.readLine()) != null) logger.info(inputLine);
-        while ((errorLine = errorReader.readLine()) != null) logger.error(errorLine);
-    }
-
 }

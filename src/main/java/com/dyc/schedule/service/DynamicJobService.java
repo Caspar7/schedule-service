@@ -48,7 +48,7 @@ public class DynamicJobService {
         JobDataMap map = new JobDataMap();
         map.put("jobName", job.getJobName());
         map.put("jobGroup", job.getJobGroup());
-        map.put("cronExpression", job.getCron());
+        map.put("cron", job.getCron());
         map.put("parameter", job.getParameter());
         map.put("JobDescription", job.getDescription());
         map.put("method", job.getMethod());
